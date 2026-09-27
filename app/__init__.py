@@ -6,29 +6,30 @@ from pathlib import Path
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from app.models import init_db
+
 
 def create_app(config_object="app.config.Config"):
     """Create and configure the Flask app."""
     app = Flask(__name__)
     app.config.from_object(config_object)
 
-    # Enable CORS (frontend will call this from a different port)
     CORS(app)
 
-    # Ensure database folder exists
     project_root = Path(app.root_path).parent
     (project_root / "database").mkdir(parents=True, exist_ok=True)
 
-    # --- Health check endpoint ---
+    # Initialize database
+    init_db(app)
+
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({
             "status": "ok",
             "service": "energy-prediction-api",
-            "version": "0.1.0"
+            "version": "0.2.0"
         }), 200
 
-    # --- Root endpoint ---
     @app.route("/", methods=["GET"])
     def root():
         return jsonify({
@@ -36,7 +37,6 @@ def create_app(config_object="app.config.Config"):
             "endpoints": ["/health", "/api/predict", "/api/history", "/api/alerts"]
         }), 200
 
-    # --- Error handlers ---
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({"error": "Not found"}), 404
