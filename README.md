@@ -63,7 +63,7 @@ python -m src.preprocessing.clean
 - [x] **Week 2**: Data acquisition, EDA, cleaning pipeline
 - [ ] Week 3: Feature engineering & baseline models
 - [x] Week 3: Feature engineering + baseline models (R²=0.60)
-- [ ] Week 4: Advanced models (Random Forest, LSTM)
+- [x] Week 4: Advanced models (XGBoost, LightGBM, LSTM, Optuna) — best R²=0.612
 - [ ] Week 5-6: Backend API (Flask)
 - [ ] Week 7-8: Frontend dashboard
 - [ ] Week 9: Integration & testing
