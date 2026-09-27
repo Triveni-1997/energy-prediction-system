@@ -25,11 +25,12 @@ __pycache__/
 *.pkl
 *.joblib
 
-# Data (large files)
-data/raw/*.csv
-data/raw/*.txt
-data/processed/*.csv
-data/external/*.csv
+data/raw/*
+data/processed/*
+data/external/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
 
 # Jupyter
 notebooks/.ipynb_checkpoints/
