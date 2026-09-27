@@ -45,3 +45,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+
+# Model binary files
+models_saved/*.npy
+models_saved/*.pkl
+models_saved/*.keras
