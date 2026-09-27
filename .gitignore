@@ -1,0 +1,46 @@
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Model files
+*.h5
+*.keras
+*.pkl
+*.joblib
+
+# Data (large files)
+data/raw/*.csv
+data/raw/*.txt
+data/processed/*.csv
+data/external/*.csv
+
+# Jupyter
+notebooks/.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
