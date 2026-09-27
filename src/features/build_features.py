@@ -3,8 +3,9 @@ Feature engineering for energy consumption prediction.
 
 Scope:
 - Time-based features
-- Lag features (t-1h, t-24h, t-168h)
-- Rolling averages (24h, 168h)
+- Lag features
+- Rolling statistics
+- Weather merge
 
 Run: python -m src.features.build_features
 """
@@ -18,9 +19,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import pandas as pd
 import numpy as np
 
+from src.data.load_data import load_weather_data
+
 
 PROCESSED_PATH = PROJECT_ROOT / "data" / "processed" / "energy_clean.csv"
 FEATURES_PATH = PROJECT_ROOT / "data" / "processed" / "features.csv"
+WEATHER_PATH = PROJECT_ROOT / "data" / "external" / "weather.csv"
 
 
 def load_clean_data(path=PROCESSED_PATH):
@@ -56,30 +60,20 @@ def add_time_features(df):
 def add_lag_features(df, target="global_active_power"):
     """Add lagged values of the target."""
     print("Adding lag features (t-1h, t-2h, t-3h, t-24h, t-48h, t-168h)...")
-
-    df["lag_1h"] = df[target].shift(1)
-    df["lag_2h"] = df[target].shift(2)
-    df["lag_3h"] = df[target].shift(3)
-    df["lag_24h"] = df[target].shift(24)
-    df["lag_48h"] = df[target].shift(48)
-    df["lag_168h"] = df[target].shift(168)  # 1 week
-
+    for lag in [1, 2, 3, 24, 48, 168]:
+        df[f"lag_{lag}h"] = df[target].shift(lag)
     print(f"  -> shape now: {df.shape}")
     return df
 
 
 def add_rolling_features(df, target="global_active_power"):
-    """Add rolling mean and std over 24h and 168h windows."""
+    """Add rolling mean and std features."""
     print("Adding rolling features (24h mean/std, 168h mean/std)...")
-
-    # Shift by 1 first so we don't leak the current value
     shifted = df[target].shift(1)
-
     df["rolling_24h_mean"] = shifted.rolling(window=24).mean()
     df["rolling_24h_std"] = shifted.rolling(window=24).std()
     df["rolling_168h_mean"] = shifted.rolling(window=168).mean()
     df["rolling_168h_std"] = shifted.rolling(window=168).std()
-
     print(f"  -> shape now: {df.shape}")
     return df
 
@@ -89,7 +83,24 @@ def drop_na_rows(df):
     before = len(df)
     df = df.dropna()
     print(f"Dropped {before - len(df)} rows with NaN (from lags/rolling)")
-    print(f"Final shape: {df.shape}")
+    return df
+
+
+def merge_weather(df, weather_path=WEATHER_PATH):
+    """Merge hourly weather data on the timestamp index."""
+    print("Merging weather data...")
+    weather = load_weather_data(weather_path)
+
+    weather_hourly = weather.resample("h").mean()
+    weather_hourly = weather_hourly.reindex(df.index, method="ffill")
+    weather_hourly = weather_hourly.fillna(weather_hourly.mean())
+
+    if "precipitation" in weather_hourly.columns:
+        weather_hourly = weather_hourly.drop(columns=["precipitation"])
+
+    df = df.join(weather_hourly, how="left")
+    print(f"  -> Merged weather columns: {weather_hourly.columns.tolist()}")
+    print(f"  -> Final shape: {df.shape}")
     return df
 
 
@@ -101,7 +112,7 @@ def save_features(df, path=FEATURES_PATH):
 
 def main():
     print("=" * 60)
-    print("FEATURE ENGINEERING")
+    print("FEATURE ENGINEERING - FULL PIPELINE")
     print("=" * 60)
 
     df = load_clean_data()
@@ -109,13 +120,13 @@ def main():
     df = add_lag_features(df)
     df = add_rolling_features(df)
     df = drop_na_rows(df)
+    df = merge_weather(df)
 
     print("\nFinal columns:")
     print(df.columns.tolist())
 
-    print("\nSample:")
-    print(df[["global_active_power", "lag_1h", "lag_24h",
-              "rolling_24h_mean", "rolling_168h_mean"]].head())
+    print("\nAny remaining NaN?")
+    print(df.isnull().sum().sum())
 
     save_features(df)
 
