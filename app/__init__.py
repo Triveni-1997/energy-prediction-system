@@ -19,15 +19,18 @@ def create_app(config_object="app.config.Config"):
 
     init_db(app)
 
+    # Register blueprints
     from app.routes import api_bp
+    from app.auth_routes import auth_bp
     app.register_blueprint(api_bp)
+    app.register_blueprint(auth_bp)
 
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({
             "status": "ok",
             "service": "energy-prediction-api",
-            "version": "0.3.0"
+            "version": "0.4.0"
         }), 200
 
     @app.route("/", methods=["GET"])
@@ -36,7 +39,10 @@ def create_app(config_object="app.config.Config"):
             "message": "Energy Consumption Prediction API",
             "endpoints": [
                 "/health",
-                "/api/predict (POST)",
+                "/api/auth/register (POST)",
+                "/api/auth/login (POST)",
+                "/api/auth/me (GET, protected)",
+                "/api/predict (POST, protected)",
                 "/api/predictions (GET)",
                 "/api/history (GET)",
                 "/api/alerts (GET)",

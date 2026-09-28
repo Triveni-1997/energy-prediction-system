@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 
 from app.models import db, Prediction, Alert, EnergyReading, User
 from app.services.prediction_service import PredictionService
+from app.services.auth_service import jwt_required
 
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -26,6 +27,7 @@ def get_prediction_service():
 
 
 @api_bp.route("/predict", methods=["POST"])
+@jwt_required
 def predict():
     if not request.is_json:
         return jsonify({"error": "Content-Type must be application/json"}), 400
@@ -110,3 +112,4 @@ def stats():
         "unacknowledged_alerts": Alert.query.filter_by(acknowledged=False).count(),
         "total_users": User.query.count(),
     }), 200
+
