@@ -1,0 +1,68 @@
+﻿/* Energy Prediction - Custom Styles */
+
+body {
+    background: #f5f7fa;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+}
+
+.card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #eaecef;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #0d6efd;
+    border: none;
+    border-radius: 8px;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0d6efd;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-control {
+    border-radius: 8px;
+}
+
+.alert-card {
+    border-left: 4px solid #dc3545;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.alert-card.warning { border-color: #ffc107; }
+.alert-card.info { border-color: #0dcaf0; }
+
+.side-panel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 768px) {
+    .metric-value { font-size: 1.5rem; }
+}
