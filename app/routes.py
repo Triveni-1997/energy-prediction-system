@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import db, Prediction, Alert, EnergyReading, User
 from app.services.prediction_service import PredictionService
 from app.services.auth_service import jwt_required
+from app.services.weather_service import fetch_current_weather
 
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -113,3 +114,11 @@ def stats():
         "total_users": User.query.count(),
     }), 200
 
+
+
+@api_bp.route("/weather", methods=["GET"])
+def weather():
+    """Fetch current weather for a city (default: Paris)."""
+    city = request.args.get("city", "Paris")
+    data = fetch_current_weather(city=city)
+    return jsonify(data), 200
