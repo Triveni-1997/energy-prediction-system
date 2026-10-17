@@ -1,6 +1,56 @@
 ﻿{% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Login - Energy Prediction{% endblock %}
 {% block content %}
-<h1>Login</h1>
-<p>Coming Day 2.</p>
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card p-4 mt-4">
+            <h3 class="mb-3 text-center">Sign In</h3>
+            <div id="alertBox"></div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Password" required>
+            </div>
+
+            <button id="loginBtn" class="btn btn-primary w-100">Login</button>
+
+            <p class="text-center mt-3 mb-0">
+                Don't have an account? <a href="/register">Register</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const alertBox = document.getElementById("alertBox");
+    alertBox.innerHTML = "";
+
+    if (!email || !password) {
+        alertBox.innerHTML = '<div class="alert alert-warning">Email and password are required.</div>';
+        return;
+    }
+
+    try {
+        const data = await apiFetch("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password })
+        });
+        setToken(data.token);
+        setUser(data.user);
+        window.location.href = "/dashboard";
+    } catch (err) {
+        alertBox.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+    }
+});
+</script>
 {% endblock %}

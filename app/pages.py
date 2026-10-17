@@ -2,7 +2,7 @@
 HTML page routes (separate from the JSON API).
 """
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
 
 
 pages_bp = Blueprint("pages", __name__)
@@ -10,7 +10,8 @@ pages_bp = Blueprint("pages", __name__)
 
 @pages_bp.route("/")
 def home():
-    return render_template("base.html")
+    """Default entry point - send user to login."""
+    return redirect(url_for("pages.login_page"))
 
 
 @pages_bp.route("/login")

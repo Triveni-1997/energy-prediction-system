@@ -1,6 +1,407 @@
 ﻿{% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard - Energy Prediction{% endblock %}
+
 {% block content %}
-<h1>Dashboard</h1>
-<p>Coming Day 3.</p>
+
+<!-- Welcome row -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Dashboard</h3>
+        <small class="text-muted" id="welcomeMsg">Welcome</small>
+    </div>
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshAll(event)">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+</div>
+
+<div id="globalAlert"></div>
+
+<!-- Metric cards row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="metric-label">Total Predictions</div>
+            <div class="metric-value" id="metricPredictions">–</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="metric-label">Active Alerts</div>
+            <div class="metric-value text-danger" id="metricAlerts">–</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="metric-label">Latest Prediction</div>
+            <div class="metric-value" id="metricLatest">– kW</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="metric-label">Weather (<span id="metricWeatherCity">Bangalore</span>)</div>
+            <div class="metric-value" id="metricWeather">–°C</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main content: prediction form + alerts/weather -->
+<div class="row g-3">
+    <!-- Left: prediction form -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cpu"></i> Predict Next Hour
+            </div>
+            <div class="card-body">
+                <div id="predictAlert"></div>
+                <form id="predictForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Timestamp</label>
+                            <input type="datetime-local" id="timestamp" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Temperature (°C)</label>
+                            <input type="number" step="0.1" id="temperature" class="form-control" value="22.0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Humidity (%)</label>
+                            <input type="number" step="1" id="humidity" class="form-control" value="55" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Wind Speed (m/s)</label>
+                            <input type="number" step="0.1" id="wind_speed" class="form-control" value="8.0" required>
+                        </div>
+                        
+                        <div class="col-12 mt-4"><h6 class="text-muted">Historical Usage (kW)</h6></div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label">1 Hour Ago</label>
+                            <input type="number" step="0.01" id="lag_1h" class="form-control" value="1.25" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">24 Hours Ago</label>
+                            <input type="number" step="0.01" id="lag_24h" class="form-control" value="1.40" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">168 Hours Ago</label>
+                            <input type="number" step="0.01" id="lag_168h" class="form-control" value="1.20" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-4">
+                        <i class="bi bi-lightning-charge"></i> Get Prediction
+                    </button>
+                </form>
+                <div id="predictionResult" class="mt-4 text-center" style="display:none;">
+                    <h4 class="text-muted">Predicted Consumption</h4>
+                    <h1 class="text-primary" id="resultValue">0.00 kW</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: alerts + weather -->
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="bi bi-cloud-sun"></i> Current Weather</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="useLiveLocation()">
+                        <i class="bi bi-geo-alt"></i> Use My Location
+                    </button>
+                </div>
+                <select id="citySelect" class="form-select form-select-sm" onchange="loadWeather()">
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Paris">Paris</option>
+                    <option value="London">London</option>
+                    <option value="New York">New York</option>
+                    <option value="Tokyo">Tokyo</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Delhi">Delhi</option>
+                </select>
+            </div>
+            <div class="card-body" id="weatherCard">
+                <p class="text-muted mb-0">Loading…</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-exclamation-triangle"></i> Recent Alerts
+            </div>
+            <div class="card-body" id="alertsCard">
+                <p class="text-muted mb-0">Loading…</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts row -->
+<div class="row g-3 mt-1">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-graph-up"></i> Prediction History Trend
+            </div>
+            <div class="card-body">
+                <canvas id="historyChart" height="80"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ---- Auth guard ----
+if (!getToken()) {
+    window.location.href = "/login";
+}
+
+// Show current user
+document.addEventListener("DOMContentLoaded", () => {
+    const u = getUser();
+    if (u) {
+        document.getElementById("welcomeMsg").innerText = `Welcome, ${u.full_name || u.email}`;
+    }
+});
+
+// ---- Fetch stats ----
+async function loadStats() {
+    try {
+        const stats = await apiFetch("/api/stats");
+        document.getElementById("metricPredictions").innerText = stats.total_predictions ?? 0;
+        document.getElementById("metricAlerts").innerText = stats.unacknowledged_alerts ?? 0;
+    } catch (e) {
+        showAlert("Failed to load stats: " + e.message, "danger");
+    }
+}
+
+// ---- Fetch latest prediction ----
+async function loadLatest() {
+    try {
+        const data = await apiFetch("/api/predictions?limit=1");
+        const preds = data.predictions || [];
+        if (preds.length) {
+            document.getElementById("metricLatest").innerText = preds[0].predicted_power_kw.toFixed(3) + " kW";
+        } else {
+            document.getElementById("metricLatest").innerText = "No data";
+        }
+    } catch (e) {
+        console.warn("Latest prediction failed:", e);
+    }
+}
+
+// ---- Fetch weather ----
+function renderWeather(w) {
+    document.getElementById("metricWeatherCity").innerText = w.city;
+    document.getElementById("metricWeather").innerText = w.temperature.toFixed(1) + "°C";
+    document.getElementById("weatherCard").innerHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="metric-value">${w.temperature.toFixed(1)}°C</div>
+                <div class="text-muted">${w.description}</div>
+            </div>
+            <div class="text-end text-muted small">
+                <div>💧 ${w.humidity}%</div>
+                <div>🌬 ${w.wind_speed} m/s</div>
+            </div>
+        </div>
+        <div class="mt-2 small text-muted">
+            <i class="bi bi-geo-alt"></i> ${w.city} &middot; <em>${w.source}</em>
+        </div>
+    `;
+}
+
+async function loadWeather() {
+    try {
+        const city = document.getElementById("citySelect")?.value || "Bangalore";
+        const w = await apiFetch(`/api/weather?city=${encodeURIComponent(city)}`);
+        renderWeather(w);
+    } catch (e) {
+        document.getElementById("weatherCard").innerHTML =
+            `<div class="text-danger">Weather unavailable: ${e.message}</div>`;
+    }
+}
+
+function useLiveLocation() {
+    if (!navigator.geolocation) {
+        alert("Geolocation is not supported by this browser.");
+        return;
+    }
+    document.getElementById("weatherCard").innerHTML =
+        `<p class="text-muted mb-0">📍 Getting your location…</p>`;
+
+    navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+            try {
+                const { latitude: lat, longitude: lon } = pos.coords;
+                const w = await apiFetch(`/api/weather/coords?lat=${lat}&lon=${lon}`);
+                renderWeather(w);
+            } catch (e) {
+                document.getElementById("weatherCard").innerHTML =
+                    `<div class="text-danger">Could not fetch weather: ${e.message}</div>`;
+            }
+        },
+        (err) => {
+            document.getElementById("weatherCard").innerHTML =
+                `<div class="text-danger">Location access denied: ${err.message}</div>`;
+        },
+        { timeout: 10000 }
+    );
+}
+
+// ---- Fetch alerts ----
+async function loadAlerts() {
+    try {
+        const data = await apiFetch("/api/alerts?include_acknowledged=false");
+        const alerts = data.alerts || [];
+        const el = document.getElementById("alertsCard");
+        if (!alerts.length) {
+            el.innerHTML = `<p class="text-muted mb-0">No alerts. All good ✅</p>`;
+            return;
+        }
+        el.innerHTML = alerts.map(a => `
+            <div class="alert-card ${a.severity === 'warning' ? 'warning' : 'info'}">
+                <strong>${a.severity.toUpperCase()}</strong>
+                <div>${a.message}</div>
+                <small class="text-muted">${new Date(a.timestamp).toLocaleString()}</small>
+            </div>
+        `).join("");
+    } catch (e) {
+        document.getElementById("alertsCard").innerHTML =
+            `<div class="text-danger">Alerts unavailable: ${e.message}</div>`;
+    }
+}
+
+// ---- Helpers ----
+function showAlert(msg, type = "info") {
+    document.getElementById("globalAlert").innerHTML =
+        `<div class="alert alert-${type}">${msg}</div>`;
+}
+
+// ---- Draw History Chart ----
+let myChart = null;
+
+async function drawChart() {
+    try {
+        const data = await apiFetch("/api/predictions?limit=20");
+        const preds = data.predictions || [];
+        
+        // Reverse so oldest is on the left
+        const labels = preds.map(p => new Date(p.timestamp).toLocaleTimeString()).reverse();
+        const values = preds.map(p => p.predicted_power_kw).reverse();
+
+        const ctx = document.getElementById('historyChart').getContext('2d');
+        
+        if (myChart) {
+            myChart.destroy(); // Clear old chart
+        }
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Predicted Power (kW)',
+                    data: values,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#0d6efd',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: false,
+                        title: { display: true, text: 'Power (kW)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Time of Prediction' }
+                    }
+                }
+            }
+        });
+    } catch (e) {
+        console.warn("Could not load chart:", e);
+    }
+}
+
+// ---- Refresh everything ----
+async function refreshAll(event) {
+    if (event) event.preventDefault();
+    document.getElementById("globalAlert").innerHTML = "";
+    await Promise.all([loadStats(), loadLatest(), loadWeather(), loadAlerts(), drawChart()]);
+}
+
+// ---- Handle Prediction Form ----
+document.addEventListener("DOMContentLoaded", () => {
+    // Set current time in the datetime picker
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById("timestamp").value = now.toISOString().slice(0, 16);
+
+    const form = document.getElementById("predictForm");
+    if (form) {
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const btn = e.target.querySelector("button");
+            const alertBox = document.getElementById("predictAlert");
+            const resultBox = document.getElementById("predictionResult");
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Predicting...';
+            alertBox.innerHTML = "";
+            resultBox.style.display = "none";
+
+            const payload = {
+                timestamp: document.getElementById("timestamp").value.replace("T", " ") + ":00",
+                temperature: parseFloat(document.getElementById("temperature").value),
+                humidity: parseFloat(document.getElementById("humidity").value),
+                wind_speed: parseFloat(document.getElementById("wind_speed").value),
+                lag_1h: parseFloat(document.getElementById("lag_1h").value),
+                lag_24h: parseFloat(document.getElementById("lag_24h").value),
+                lag_168h: parseFloat(document.getElementById("lag_168h").value),
+                // Auto-filled fields for the demo
+                lag_2h: 1.10, lag_3h: 0.95, lag_48h: 1.35,
+                rolling_24h_mean: 1.15, rolling_24h_std: 0.45, 
+                rolling_168h_mean: 1.10, rolling_168h_std: 0.50
+            };
+
+            try {
+                const data = await apiFetch("/api/predict", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                
+                resultBox.style.display = "block";
+                document.getElementById("resultValue").innerText = data.predicted_power_kw + " kW";
+                
+                // Refresh the metrics and chart
+                loadStats();
+                loadLatest();
+                drawChart();
+                
+            } catch (err) {
+                alertBox.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lightning-charge"></i> Get Prediction';
+            }
+        });
+    }
+});
+
+// ---- Run on page load ----
+document.addEventListener("DOMContentLoaded", refreshAll);
+</script>
 {% endblock %}

@@ -7,7 +7,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.models import db, Prediction, Alert, EnergyReading, User
 from app.services.prediction_service import PredictionService
 from app.services.auth_service import jwt_required
-from app.services.weather_service import fetch_current_weather
+from app.services.weather_service import fetch_current_weather, fetch_weather_by_coords
 
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
@@ -121,4 +121,18 @@ def weather():
     """Fetch current weather for a city (default: Paris)."""
     city = request.args.get("city", "Paris")
     data = fetch_current_weather(city=city)
+    return jsonify(data), 200
+
+
+
+@api_bp.route("/weather/coords", methods=["GET"])
+def weather_by_coords():
+    """Fetch weather by GPS coordinates: ?lat=X&lon=Y"""
+    try:
+        lat = float(request.args.get("lat"))
+        lon = float(request.args.get("lon"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "lat and lon query params required (floats)"}), 400
+
+    data = fetch_weather_by_coords(lat, lon)
     return jsonify(data), 200

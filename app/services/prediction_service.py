@@ -70,15 +70,17 @@ class PredictionService:
             "month_cos": np.cos(2 * np.pi * idx.month / 12),
         }
 
-        required_continuous = [
-            "lag_1h", "lag_2h", "lag_3h", "lag_24h", "lag_48h", "lag_168h",
-            "rolling_24h_mean", "rolling_24h_std",
-            "rolling_168h_mean", "rolling_168h_std",
-        ]
-        for key in required_continuous:
-            if key not in raw_input:
-                raise ValueError(f"Missing required field: {key}")
-            feature_values[key] = float(raw_input[key])
+        # Sensible defaults if the frontend didn't send a field
+        defaults = {
+            "lag_1h": 1.0, "lag_2h": 1.0, "lag_3h": 1.0,
+            "lag_24h": 1.0, "lag_48h": 1.0, "lag_168h": 1.0,
+            "rolling_24h_mean": 1.0, "rolling_24h_std": 0.5,
+            "rolling_168h_mean": 1.0, "rolling_168h_std": 0.5,
+        }
+
+        for key, default_val in defaults.items():
+            # Use the value from the request, or the default if missing
+            feature_values[key] = float(raw_input.get(key, default_val))
 
         feature_values["temperature"] = float(raw_input.get("temperature", 15.0))
         feature_values["humidity"] = float(raw_input.get("humidity", 60.0))
