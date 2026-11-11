@@ -10,13 +10,8 @@ numpy==1.26.4
 # ML
 scikit-learn==1.5.1
 joblib==1.4.2
-
-# Deep Learning
-tensorflow==2.15.0
-
-# Visualization
-matplotlib==3.9.2
-seaborn==0.13.2
+xgboost==2.0.3
+lightgbm==4.3.0
 
 # Database
 SQLAlchemy==2.0.31
@@ -28,12 +23,7 @@ Werkzeug==3.0.3
 
 # API / CORS
 Flask-CORS==4.0.1
+PyJWT==2.15.0
 
-# Utilities
-ipykernel==6.29.5
-notebook==7.2.1
-
-
-xgboost==2.0.3
-lightgbm==4.3.0
-optuna==3.6.1
+# Production Server
+gunicorn==21.2.0
