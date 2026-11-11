@@ -1,1 +1,1 @@
-web: gunicorn run:app
+web: mkdir -p src/models_saved && cp -r models_saved/* src/models_saved/ && gunicorn run:app
