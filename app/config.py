@@ -27,7 +27,8 @@ class Config:
     JWT_EXPIRY_HOURS = 24
 
     # Paths
-    MODELS_DIR = PROJECT_ROOT / "models_saved"
+        # Define the root of the project properly for both local and cloud
+    MODELS_DIR = Path(__file__).resolve().parents[1] / "models_saved"
     PRODUCTION_MODEL = MODELS_DIR / "lightgbm_tuned.pkl"
     SCALER_X = MODELS_DIR / "scaler_X.pkl"
     SCALER_Y = MODELS_DIR / "scaler_y.pkl"
